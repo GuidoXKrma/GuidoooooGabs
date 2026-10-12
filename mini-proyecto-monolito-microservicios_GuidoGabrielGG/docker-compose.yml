@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-proyecto_app}
+      POSTGRES_USER: ${POSTGRES_USER:-app_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cambia_esta_clave}
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app_user} -d ${POSTGRES_DB:-proyecto_app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+  monolito:
+    build: ./monolito
+    environment: { PORT: 3000, DB_HOST: postgres, DB_PORT: 5432, DB_NAME: ${POSTGRES_DB:-proyecto_app}, DB_USER: ${POSTGRES_USER:-app_user}, DB_PASSWORD: ${POSTGRES_PASSWORD:-cambia_esta_clave} }
+    ports: ["3000:3000"]
+    depends_on: { postgres: { condition: service_healthy } }
+  usuarios:
+    build: ./microservicios/usuarios
+    ports: ["3001:3001"]
+  productos:
+    build: ./microservicios/productos
+    ports: ["3002:3002"]
+  pedidos:
+    build: ./microservicios/pedidos
+    ports: ["3003:3003"]
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports: ["9090:9090"]
+    volumes: ["./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+  grafana:
+    image: grafana/grafana:11.3.0
+    ports: ["3004:3000"]
+    environment: { GF_SECURITY_ADMIN_USER: admin, GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-cambia_esta_clave} }
+    volumes: ["./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro"]
+volumes:
+  pgdata:

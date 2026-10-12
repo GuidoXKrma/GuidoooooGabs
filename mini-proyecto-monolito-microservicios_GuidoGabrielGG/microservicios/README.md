@@ -1,0 +1,1 @@
+Servicios independientes: usuarios (3001), productos (3002) y pedidos (3003). Cada uno expone /health, /metrics, GET del recurso y POST del recurso. Los datos de estos servicios son en memoria para demostrar independencia; el monolito usa PostgreSQL.

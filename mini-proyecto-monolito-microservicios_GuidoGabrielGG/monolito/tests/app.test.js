@@ -1,0 +1,6 @@
+const request=require('supertest');jest.mock('../src/db',()=>({query:jest.fn(async sql=>{if(sql.includes('SELECT NOW'))return{rows:[{fecha:'2026-01-01'}]};if(sql.includes('FROM usuarios'))return{rows:[{id:1,nombre:'Ana',email:'ana@correo.com'}]};if(sql.includes('FROM productos'))return{rows:[{id:1,nombre:'Laptop',precio:'2500'}]};if(sql.includes('FROM pedidos'))return{rows:[{id:1,usuario_id:1,producto_id:1,cantidad:1}]};return{rows:[]}})}));const app=require('../src/app');
+test('health devuelve ok',async()=>{const r=await request(app).get('/health');expect(r.status).toBe(200);expect(r.body.estado).toBe('ok')});
+test('usuarios devuelve lista',async()=>{const r=await request(app).get('/usuarios');expect(r.status).toBe(200);expect(r.body.length).toBeGreaterThan(0)});
+test('productos devuelve lista',async()=>{const r=await request(app).get('/productos');expect(r.status).toBe(200);expect(r.body.length).toBeGreaterThan(0)});
+test('pedidos devuelve lista',async()=>{const r=await request(app).get('/pedidos');expect(r.status).toBe(200);expect(r.body.length).toBeGreaterThan(0)});
+test('POST valida campos',async()=>{const r=await request(app).post('/usuarios').send({});expect(r.status).toBe(400)});
